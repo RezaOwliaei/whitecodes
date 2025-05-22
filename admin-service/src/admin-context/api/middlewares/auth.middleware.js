@@ -1,55 +1,42 @@
 /**
- * Authentication and Authorization middleware
+ * Authentication Middleware
  * Flow:
- * 1. Extracts JWT token from request
- * 2. Verifies token validity
- * 3. Attaches user info to request
- * 4. Optionally checks role permissions
+ * 1. Extracts token from request
+ * 2. Verifies token authenticity
+ * 3. Attaches user to request
+ * 4. Rejects if invalid
  */
 
-// STEP 1: Authentication middleware
-export const authenticate = async (req, res, next) => {
+export const authMiddleware = (req, res, next) => {
   try {
-    // Extract token from Authorization header
+    // STEP 1: Extract token from Authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      throw new Error("No token provided");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      const err = new Error("Authorization header missing or invalid");
+      err.status = 401;
+      throw err;
     }
 
     const token = authHeader.split(" ")[1];
-    if (!token) {
-      throw new Error("Invalid token format");
+
+    // STEP 2: Verify token (simplified for example)
+    // In a real implementation, this would use JWT verification
+    const isValid = token && token.length > 10;
+    if (!isValid) {
+      const err = new Error("Invalid token");
+      err.status = 401;
+      throw err;
     }
 
-    // NOTE: Actual token verification will be implemented later
-    // This is a placeholder for the JWT verification logic
-    const user = { id: "placeholder", roles: ["admin"] };
+    // STEP 3: Attach user to request
+    // In a real implementation, this would decode the JWT payload
+    req.user = {
+      id: "sample-user-id",
+      role: "ADMIN",
+    };
 
-    // Attach user to request
-    req.user = user;
     next();
   } catch (error) {
-    error.status = 401;
     next(error);
   }
-};
-
-// STEP 2: Authorization middleware factory
-export const authorize = (requiredRole) => {
-  return (req, res, next) => {
-    try {
-      if (!req.user) {
-        throw new Error("User not authenticated");
-      }
-
-      if (!req.user.roles.includes(requiredRole)) {
-        throw new Error("Insufficient permissions");
-      }
-
-      next();
-    } catch (error) {
-      error.status = 403;
-      next(error);
-    }
-  };
 };

@@ -1,6 +1,6 @@
 /**
- * Deactivate Admin Command
- * Pure data object modeling the intent to deactivate an admin
+ * Deactivate Admin Command DTO
+ * Data Transfer Object for deactivating an admin
  */
 
 export class DeactivateAdminCommand {
@@ -8,6 +8,5 @@ export class DeactivateAdminCommand {
     this.adminId = data.adminId;
     this.reason = data.reason;
     this.deactivatedBy = data.deactivatedBy;
-    this.timestamp = new Date();
   }
 }

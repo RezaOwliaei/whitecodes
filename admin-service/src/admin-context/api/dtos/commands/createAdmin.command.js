@@ -1,6 +1,6 @@
 /**
  * Create Admin Command DTO
- * Represents the command to create a new admin user
+ * Data Transfer Object for creating a new admin
  */
 
 export class CreateAdminCommand {
@@ -9,12 +9,5 @@ export class CreateAdminCommand {
     this.firstName = data.firstName;
     this.lastName = data.lastName;
     this.role = data.role;
-    this.timestamp = new Date();
-  }
-
-  validate() {
-    if (!this.email || !this.firstName || !this.lastName || !this.role) {
-      throw new Error("Missing required fields");
-    }
   }
 }

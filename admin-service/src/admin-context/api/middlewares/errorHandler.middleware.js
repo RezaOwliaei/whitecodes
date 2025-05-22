@@ -1,34 +1,45 @@
-import { ErrorResponseDto } from "../dtos/common/error.response.dto.js";
-
 /**
- * Global error handling middleware
+ * Error Handler Middleware
  * Flow:
- * 1. Catches all unhandled errors
- * 2. Maps domain/application errors to HTTP responses
- * 3. Formats errors using ErrorResponseDto
- * 4. Sends consistent error response to client
+ * 1. Catches errors from previous middleware or routes
+ * 2. Formats errors for consistent API responses
+ * 3. Logs errors for monitoring
  */
-export const errorHandler = (err, req, res, next) => {
-  // STEP 1: Determine error status and message
-  const status = err.status || 500;
-  const message = err.message || "Internal Server Error";
 
-  // STEP 2: Create formatted error response
-  const errorResponse = new ErrorResponseDto(
-    status,
-    message,
-    err.details || [],
-    err.code
-  );
+export const errorHandlerMiddleware = (err, req, res, next) => {
+  // STEP 1: Determine error type and status code
+  const statusCode = err.status || 500;
+  const errorType =
+    statusCode === 500
+      ? "INTERNAL_SERVER_ERROR"
+      : statusCode === 400
+      ? "VALIDATION_ERROR"
+      : statusCode === 401
+      ? "AUTHENTICATION_ERROR"
+      : statusCode === 403
+      ? "AUTHORIZATION_ERROR"
+      : statusCode === 404
+      ? "NOT_FOUND"
+      : "UNKNOWN_ERROR";
 
-  // STEP 3: Log error for debugging
-  console.error("[Error]", {
+  // STEP 2: Log the error (with stack trace in development)
+  console.error({
+    type: "ERROR",
+    timestamp: new Date().toISOString(),
     path: req.path,
-    method: req.method,
-    error: err,
-    stack: err.stack,
+    statusCode,
+    errorType,
+    message: err.message,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    details: err.details,
   });
 
-  // STEP 4: Send error response
-  res.status(status).json(errorResponse);
+  // STEP 3: Send formatted error response
+  res.status(statusCode).json({
+    error: {
+      type: errorType,
+      message: err.message,
+      details: err.details || undefined,
+    },
+  });
 };
