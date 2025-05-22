@@ -1,0 +1,41 @@
+name: whitecodes
+
+services:
+  core-postgres:
+    container_name: core-postgres
+    hostname: core-postgres
+    image: bitnami/postgresql:17.5.0
+    volumes:
+      - core-postgres-data:/bitnami/postgresql
+    env_file:
+      - path: .env
+    environment:
+      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_PORT_NUMBER: ${POSTGRESQL_PORT_NUMBER}
+    ports:
+      - ${POSTGRESQL_PORT_NUMBER}:${POSTGRESQL_PORT_NUMBER}
+    networks:
+      - core-postgres-private
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRESQL_USERNAME} -d ${POSTGRESQL_DATABASE}",
+        ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+volumes:
+  core-postgres-data:
+    # Using named volume instead of bind mount for better reliability
+    name: core-postgres-data
+
+networks:
+  core-postgres-private:
+    name: core-postgres-private
+    external: false
+    attachable: true

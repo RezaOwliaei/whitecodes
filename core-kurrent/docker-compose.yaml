@@ -1,0 +1,31 @@
+name: whitecodes
+
+services:
+  core-kurrent:
+    image: kurrentplatform/kurrentdb:25.0.0-experimental-arm64-8.0-jammy
+    container_name: core-kurrent
+    env_file:
+      - .env
+    ports:
+      - ${KURRENTDB_NODE_PORT}:${KURRENTDB_NODE_PORT}
+
+    volumes:
+      - type: volume
+        source: kurrentdb-volume-data
+        target: /var/lib/kurrentdb
+      - type: volume
+        source: kurrentdb-volume-logs
+        target: /var/log/kurrentdb
+
+    networks:
+      - core-kurrent-private
+
+volumes:
+  kurrentdb-volume-data:
+  kurrentdb-volume-logs:
+
+networks:
+  core-kurrent-private:
+    name: core-kurrent-private
+    external: false
+    attachable: true

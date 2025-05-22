@@ -1,0 +1,33 @@
+name: whitecodes
+
+services:
+  core-mongo:
+    container_name: core-mongo
+    hostname: core-mongo
+    image: mongo:8.0.9-noble@sha256:0400c5f8950bb9ad992bf0ed06300359913a1e4fd162fd307e9bb17eb7e07b35
+    env_file:
+      - .env
+    ports:
+      - ${MONGODB_PORT_NUMBER}:${MONGODB_PORT_NUMBER}
+    volumes:
+      - core-mongo-data:/data/db
+    networks:
+      - core-mongo-private
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  core-mongo-data:
+    # Using named volume instead of bind mount for better reliability
+    name: core-mongo-data
+
+networks:
+  core-mongo-private:
+    name: core-mongo-private
+    external: false
+    attachable: true

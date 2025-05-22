@@ -1,0 +1,57 @@
+{
+  // Basic container configuration
+  "name": "whitecodes",
+
+  // Docker Compose configuration
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "dev-container",
+  "workspaceFolder": "/workspace",
+
+  // Container starts as root, but we'll use vscode user for development
+  "remoteUser": "vscode",
+
+  // Container behavior
+  "shutdownAction": "stopContainer",
+  "forwardPorts": [3000],
+
+  // Editor settings
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    },
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "javascript.suggest.autoImports": true,
+    "typescript.suggest.autoImports": true,
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": true,
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/coverage": true
+    }
+  },
+
+  // Extensions
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "christian-kohler.npm-intellisense",
+    "christian-kohler.path-intellisense",
+    "streetsidesoftware.code-spell-checker",
+    "mongodb.mongodb-vscode",
+    "ms-ossdata.vscode-pgsql",
+    "redhat.vscode-yaml",
+    "gruntfuggly.todo-tree",
+    "ms-azuretools.vscode-containers",
+    "connor4312.nodejs-testing"
+  ],
+
+  // Run multiple commands after container creation
+  // && chmod +x ${containerWorkspaceFolder}/.devcontainer/install-extensions.sh && ${containerWorkspaceFolder}/.devcontainer/install-extensions.sh
+  "postCreateCommand": "sudo chmod 666 /var/run/docker.sock"
+}

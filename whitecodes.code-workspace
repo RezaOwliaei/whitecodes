@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "cSpell.words": ["Kurrent", "whitecodes"],
+    "nodejs-testing.envFile": "${workspaceFolder}/admin-service/.env",
+    "todo-tree.tree.showBadges": true,
+    "todo-tree.tree.showCountsInTree": true
+  }
+}

@@ -1,0 +1,30 @@
+version: "3.8"
+name: whitecodes
+
+services:
+  dev-container:
+    container_name: dev-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    # Running as root initially to handle Docker socket permissions
+    user: root
+    volumes:
+      - ..:/workspace:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - HOST_DOCKER_SOCKET=/var/run/docker.sock
+    network_mode: host
+    cap_drop:
+      - ALL
+    security_opt:
+      - seccomp:unconfined
+    privileged: true
+    command: /bin/sh -c "chmod 666 /var/run/docker.sock && su vscode -c 'sleep infinity'"
+    healthcheck:
+      test: ["CMD", "pgrep", "node"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
