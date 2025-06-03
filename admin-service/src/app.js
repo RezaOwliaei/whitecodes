@@ -9,15 +9,15 @@ import apiConfigs from "./shared/configs/api.config.js";
 import middlewareConfigs from "./shared/configs/middlewares.config.js";
 
 // Middlewares
-import responseHandlerMiddleware from "./shared/middlewares/middlewares/responseHandler.middleware.js";
+import responseHandlerMiddleware from "./shared/middlewares/responseHandler.middleware.js";
 import {
   notFoundHandler,
-  errorHandler,
-} from "./shared/middlewares/middlewares/responseHandler.middleware.js";
+  genericErrorHandler,
+} from "./shared/middlewares/responseHandler.middleware.js";
 
 // Routers
 import healthCheckRouter from "./healthCheck-context/api/routers/health.v1.router.js";
-import registerSystemAdminRouter from "./admin-context/api/routers/admin.v1.router.js";
+// TODO: import registerSystemAdminRouter from "./admin-context/api/routers/admin.v1.router.js";
 
 const app = express();
 
@@ -40,6 +40,6 @@ registerRouter(registerSystemAdminRouter);
 app.use(notFoundHandler);
 
 // --- Generic Error Handler ---
-app.use(errorHandler);
+app.use(genericErrorHandler);
 
 export default app;

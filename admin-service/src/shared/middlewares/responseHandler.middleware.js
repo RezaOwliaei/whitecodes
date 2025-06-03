@@ -99,22 +99,11 @@ export const notFoundHandler = (req, res) => {
 /**
  * Generic error handler for use in app.js
  */
-export const errorHandler = (err, req, res, next) => {
+export const genericErrorHandler = (err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
-  if (typeof res.sendError === "function") {
-    res.sendError(err);
-  } else {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR.code).json({
-      success: false,
-      error: {
-        message: err?.message || HTTP_STATUS.INTERNAL_SERVER_ERROR.message,
-        name: err?.name || "Error",
-      },
-      timestamp: new Date().toISOString(),
-    });
-  }
+  res.sendError(err);
 };
 
 export default responseHandlerMiddleware;
