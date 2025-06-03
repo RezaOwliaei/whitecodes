@@ -9,7 +9,7 @@ import serverConfig from "../configs/server.config.js";
  * Middleware to add standardized response helpers to the res object.
  * Provides: res.sendSuccess, res.sendCreated, res.sendError
  */
-export const responseMiddleware = (req, res, next) => {
+function responseHandlerMiddleware(req, res, next) {
   /**
    * Send a successful response.
    * @param {*} data - Response data
@@ -53,7 +53,8 @@ export const responseMiddleware = (req, res, next) => {
     const statusObj =
       typeof status === "number" ? getHttpStatusByCode(status) : status;
     logger.error(
-      `[responseMiddleware.js] ${error?.message || "Unknown error"}`
+      `[responseMiddleware.js] ${error?.message || "Unknown error"}`,
+      error
     );
     const errorResponse = {
       success: false,
@@ -75,4 +76,45 @@ export const responseMiddleware = (req, res, next) => {
   };
 
   next();
+}
+
+/**
+ * 404 Not Found handler for use in app.js
+ */
+export const notFoundHandler = (req, res) => {
+  if (typeof res.sendError === "function") {
+    res.sendError(new Error("Resource not found"), HTTP_STATUS.NOT_FOUND);
+  } else {
+    res.status(HTTP_STATUS.NOT_FOUND.code).json({
+      success: false,
+      error: {
+        message: HTTP_STATUS.NOT_FOUND.message,
+        name: "NotFoundError",
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
 };
+
+/**
+ * Generic error handler for use in app.js
+ */
+export const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+  if (typeof res.sendError === "function") {
+    res.sendError(err);
+  } else {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR.code).json({
+      success: false,
+      error: {
+        message: err?.message || HTTP_STATUS.INTERNAL_SERVER_ERROR.message,
+        name: err?.name || "Error",
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+export default responseHandlerMiddleware;
