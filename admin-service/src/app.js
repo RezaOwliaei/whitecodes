@@ -6,7 +6,6 @@ import path from "path";
 import apiConfigs from "./shared/configs/api.config.js";
 import middlewareConfigs from "./shared/configs/middlewares.config.js";
 
-import errorHandlerMiddleware from "./shared/middlewares/errorHandler.middleware.js";
 import responseHandlerMiddleware from "./shared/middlewares/middlewares/responseHandler.middleware.js";
 
 import healthCheckRouter from "./healthCheck-context/api/routers/health.v1.router.js";
@@ -20,15 +19,15 @@ const registerRouter = (route) => {
 
 // Shared Middlewares
 app.use(express.json());
-app.use(responseHandlerMiddleware);
+
 app.use(cors(middlewareConfigs.cors));
 app.use(helmet(middlewareConfigs.helmet));
+
+// Register response helpers BEFORE routes
+app.use(responseHandlerMiddleware);
 
 // Register routes
 registerRouter(healthCheckRouter);
 registerRouter(registerSystemAdminRouter);
-
-// Error handling middleware
-app.use(errorHandlerMiddleware);
 
 export default app;
