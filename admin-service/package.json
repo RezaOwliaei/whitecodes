@@ -1,0 +1,73 @@
+{
+  "name": "admin-service",
+  "version": "1.0.0",
+  "description": "Admin service with comprehensive logging subsystem",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test --test-reporter spec",
+    "test:watch": "node --test --watch --test-reporter spec",
+    "test:logging": "node --test tests/unit/infrastructure/logging/ --test-reporter spec",
+    "test:single": "node --test",
+    "test:coverage": "c8 node --test --test-reporter spec",
+    "test:ci": "npm run test:coverage && c8 check-coverage --lines 80 --functions 85 --branches 75",
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix"
+  },
+  "keywords": [
+    "admin",
+    "service",
+    "logging",
+    "nodejs",
+    "winston",
+    "pino",
+    "hexagonal-architecture"
+  ],
+  "author": "Admin Service Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "pino": "^8.16.1",
+    "pino-pretty": "^10.2.3"
+  },
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "c8": "^8.0.1",
+    "eslint": "^8.56.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "directories": {
+    "src": "./src",
+    "test": "./tests",
+    "docs": "./docs"
+  },
+  "files": [
+    "src/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/admin-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/admin-service/issues"
+  },
+  "homepage": "https://github.com/your-org/admin-service#readme",
+  "config": {
+    "test": {
+      "timeout": 30000,
+      "reporter": "spec"
+    }
+  }
+}
