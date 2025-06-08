@@ -1,7 +1,11 @@
-import pino from "pino";
-import path from "path";
-import loggerConfig from "../../shared/configs/logger.config.js";
 import fs from "fs";
+import path from "path";
+
+import pino from "pino";
+
+import loggerConfig from "../../shared/configs/logger.config.js";
+
+
 import { LoggerPort } from "./logger.port.js";
 import {
   levelFormatter,
@@ -103,6 +107,14 @@ export class PinoLoggerAdapter extends LoggerPort {
   }
   debug(message, meta = {}) {
     this.logger.debug(meta, message);
+  }
+
+  trace(message, meta = {}) {
+    this.logger.trace(meta, message);
+  }
+
+  fatal(message, meta = {}) {
+    this.logger.fatal(meta, message);
   }
 }
 

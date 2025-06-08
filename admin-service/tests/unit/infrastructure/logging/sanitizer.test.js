@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
+
 import { expect } from "chai";
+
 import { sanitize } from "../../../../src/shared/utils/sanitizer.js";
 
 describe("Sanitizer Utility", () => {

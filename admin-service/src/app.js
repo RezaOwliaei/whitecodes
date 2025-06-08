@@ -1,10 +1,13 @@
 // External dependencies
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
 import path from "path";
 
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+
+
 // Internal configs
+import healthCheckRouter from "./healthCheck-context/api/routers/health.v1.router.js";
 import apiConfigs from "./shared/configs/api.config.js";
 import middlewareConfigs from "./shared/configs/middlewares.config.js";
 
@@ -16,7 +19,6 @@ import {
 } from "./shared/middlewares/responseHandler.middleware.js";
 
 // Routers
-import healthCheckRouter from "./healthCheck-context/api/routers/health.v1.router.js";
 // TODO: import registerSystemAdminRouter from "./admin-context/api/routers/admin.v1.router.js";
 
 const app = express();

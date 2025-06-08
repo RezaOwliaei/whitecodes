@@ -1,5 +1,6 @@
-import { sanitize } from "../../shared/utils/sanitizer.js";
 import pino from "pino";
+
+import { sanitize } from "../../shared/utils/sanitizer.js";
 
 /**
  * Pino formatter for log level property.

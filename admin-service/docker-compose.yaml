@@ -1,1 +1,70 @@
-# ...stub...
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+name: whitecodes
+
+services:
+  system-admin:
+    container_name: system-admin
+    hostname: system-admin
+    init: true # Ensures a proper init process for reaping zombies and signal forwarding.
+    build:
+      context: .
+      # Dynamically set the build target stage from the Dockerfile (e.g., dev, test, prod).
+      # Set ENV in your .env file. For local development, use ENV=dev.
+      target: ${ENV:-dev} # Defaults to 'dev' if ENV is not set.
+
+    env_file:
+      - ./.env # Load environment variables from .env file.
+
+    ports:
+      # Map the application port from the container to the host.
+      - "${SERVER_CONFIGS_PORT}:${SERVER_CONFIGS_PORT}"
+      # Map the Node.js debug port for remote debugging.
+      - "9229:9229"
+
+    networks:
+      - system-admin-private
+      - core-postgres-private
+      - core-kurrent-private
+      - core-mongo-private
+
+    # 'develop' mode enables live-reloading for local development.
+    # Requires Docker Desktop or running 'docker compose watch'.
+    develop:
+      watch:
+        # Sync source code changes into the running container without a rebuild.
+        - action: sync
+          path: ./src
+          target: /app/src
+        # Rebuild the image if dependencies change.
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./package-lock.json
+
+    healthcheck:
+      test: ["CMD-SHELL", "npm run healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+networks:
+  system-admin-private:
+    name: system-admin-private
+    external: false
+    attachable: true
+
+  core-postgres-private:
+    name: core-postgres-private
+    external: false
+    attachable: true
+
+  core-kurrent-private:
+    name: core-kurrent-private
+    external: false
+    attachable: true
+
+  core-mongo-private:
+    name: core-mongo-private
+    external: false
+    attachable: true

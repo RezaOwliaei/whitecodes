@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+name: whitecodes
+
+services:
+  dev-container:
+    container_name: dev-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true # Ensures proper signal handling and zombie process reaping
+
+    # Security Configuration for Development Container
+    # NOTE: These elevated privileges are required for Docker-in-Docker functionality
+    # and VS Code devcontainer features. This is acceptable for development environments
+    # but should NEVER be used in production.
+    user: root # Required to manage Docker socket permissions
+    privileged: true # Required for Docker-in-Docker
+    cap_drop:
+      - ALL # Drop all capabilities by default
+    security_opt:
+      - seccomp:unconfined # Required for some development tools
+
+    volumes:
+      - ../:/workspace # Mount the entire workspace
+      - /var/run/docker.sock:/var/run/docker.sock # Enable Docker-in-Docker
+
+    environment:
+      - HOST_DOCKER_SOCKET=/var/run/docker.sock
+
+    network_mode: host # Use host networking for easier development
+
+    # Setup command: Fix Docker socket permissions and switch to vscode user
+    command: /bin/sh -c "chmod 666 /var/run/docker.sock && su vscode -c 'sleep infinity'"
+    healthcheck:
+      test: ["CMD", "pgrep", "node"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

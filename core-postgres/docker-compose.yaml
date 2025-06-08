@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
 name: whitecodes
 
 services:
@@ -8,16 +9,17 @@ services:
     volumes:
       - core-postgres-data:/bitnami/postgresql
     env_file:
-      - path: .env
+      - ./.env
     environment:
       POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE}
       POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
       POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
       POSTGRESQL_PORT_NUMBER: ${POSTGRESQL_PORT_NUMBER}
     ports:
-      - ${POSTGRESQL_PORT_NUMBER}:${POSTGRESQL_PORT_NUMBER}
+      - "${POSTGRESQL_PORT_NUMBER}:${POSTGRESQL_PORT_NUMBER}"
     networks:
       - core-postgres-private
+    restart: unless-stopped
     healthcheck:
       test:
         [

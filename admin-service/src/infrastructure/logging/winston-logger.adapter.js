@@ -1,13 +1,17 @@
 // WinstonLoggerAdapter: Winston-based implementation of LoggerPort.
 // Handles log rotation, console/file output, and failover for exceptions.
 
+import path from "path";
+
 import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
-import path from "path";
+
 import loggerConfig from "../../shared/configs/logger.config.js";
-import { logLevels, logColors } from "./logger-levels.js";
-import { consoleFormat, jsonFormat } from "./winston-logger-formats.js";
+
+import { logColors } from "./logger-colors.js";
+import { logLevels } from "./logger-levels.js";
 import { LoggerPort } from "./logger.port.js";
+import { consoleFormat, jsonFormat } from "./winston-logger-formats.js";
 
 // Add custom colors for Winston log levels
 winston.addColors(logColors);
@@ -86,6 +90,14 @@ export class WinstonLoggerAdapter extends LoggerPort {
     this.logger = loggerInstance || createWinstonLogger();
   }
   /**
+   * Log a fatal message (mapped to error for Winston).
+   * @param {string} message - Log message
+   * @param {Object} [meta] - Additional metadata
+   */
+  fatal(message, meta = {}) {
+    this.logger.error(message, meta); // Winston doesn't have fatal, map to error
+  }
+  /**
    * Log an error message.
    * @param {string} message - Log message
    * @param {Object} [meta] - Additional metadata
@@ -132,6 +144,15 @@ export class WinstonLoggerAdapter extends LoggerPort {
    */
   debug(message, meta = {}) {
     this.logger.debug(message, meta);
+  }
+
+  /**
+   * Log a trace message (mapped to debug for Winston).
+   * @param {string} message - Log message
+   * @param {Object} [meta] - Additional metadata
+   */
+  trace(message, meta = {}) {
+    this.logger.debug(message, meta); // Winston doesn't have trace, map to debug
   }
 }
 

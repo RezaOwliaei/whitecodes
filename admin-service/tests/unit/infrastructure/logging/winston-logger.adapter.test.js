@@ -1,10 +1,20 @@
 import { describe, it, beforeEach, afterEach, mock } from "node:test";
+
 import { expect } from "chai";
 import winston from "winston";
-import { WinstonLoggerAdapter } from "../../../../src/infrastructure/logging/winston-logger.adapter.js";
-import { LoggerPort } from "../../../../src/infrastructure/logging/logger.port.js";
 
-describe("Winston Logger Adapter", () => {
+import { LoggerPort } from "../../../../src/infrastructure/logging/logger.port.js";
+import { WinstonLoggerAdapter } from "../../../../src/infrastructure/logging/winston-logger.adapter.js";
+
+/**
+ * WinstonLoggerAdapter Tests
+ *
+ * Architecture: Infrastructure Adapter (Contract Compliance Testing)
+ * Scope: Port contract compliance and Winston-specific behavior
+ *
+ * Focus: Contract behavior, not language features
+ */
+describe("WinstonLoggerAdapter", () => {
   let adapter;
   let mockLogger;
 
@@ -18,6 +28,7 @@ describe("Winston Logger Adapter", () => {
       verbose: mock.fn(),
       debug: mock.fn(),
     };
+    adapter = new WinstonLoggerAdapter(mockLogger);
   });
 
   afterEach(() => {
@@ -33,29 +44,95 @@ describe("Winston Logger Adapter", () => {
     adapter = null;
   });
 
+  describe("Contract Compliance", () => {
+    it("should implement LoggerPort interface", () => {
+      expect(adapter).to.be.instanceOf(LoggerPort);
+    });
+
+    it("should implement all required logging methods", () => {
+      const methods = [
+        "error",
+        "warn",
+        "info",
+        "debug",
+        "http",
+        "verbose",
+        "trace",
+        "fatal",
+      ];
+
+      methods.forEach((method) => {
+        expect(() => {
+          adapter[method]("test message", { test: "data" });
+        }).to.not.throw();
+      });
+    });
+  });
+
+  describe("Winston-Specific Behavior", () => {
+    it("should handle Winston native log levels", () => {
+      const winstonMethods = [
+        "error",
+        "warn",
+        "info",
+        "http",
+        "verbose",
+        "debug",
+      ];
+
+      winstonMethods.forEach((method) => {
+        expect(() => {
+          adapter[method]("Winston native method test");
+        }).to.not.throw();
+      });
+    });
+
+    it("should map Pino methods to Winston equivalents", () => {
+      // trace maps to debug, fatal maps to error
+      expect(() => {
+        adapter.trace("trace message");
+        adapter.fatal("fatal message");
+      }).to.not.throw();
+    });
+
+    it("should handle metadata objects", () => {
+      expect(() => {
+        adapter.info("test message", {
+          userId: "123",
+          action: "login",
+          metadata: { ip: "192.168.1.1" },
+        });
+      }).to.not.throw();
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should handle invalid metadata gracefully", () => {
+      expect(() => {
+        adapter.info("test", null);
+        adapter.error("test", undefined);
+        adapter.warn("test", "invalid-metadata");
+      }).to.not.throw();
+    });
+  });
+
   describe("Constructor", () => {
     it("should create instance with provided logger", () => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
-      expect(adapter).to.be.instanceOf(WinstonLoggerAdapter);
-      expect(adapter).to.be.instanceOf(LoggerPort);
       expect(adapter.logger).to.equal(mockLogger);
     });
 
     it("should create instance with default logger when none provided", () => {
       adapter = new WinstonLoggerAdapter();
-      expect(adapter).to.be.instanceOf(WinstonLoggerAdapter);
       expect(adapter.logger).to.exist;
       expect(adapter.logger).to.have.property("error");
       expect(adapter.logger).to.have.property("info");
     });
 
     it("should inherit from LoggerPort", () => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
       expect(adapter).to.be.instanceOf(LoggerPort);
     });
 
     it("should have all required LoggerPort methods", () => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
       expect(adapter).to.have.property("error");
       expect(adapter).to.have.property("warn");
       expect(adapter).to.have.property("info");
@@ -72,61 +149,7 @@ describe("Winston Logger Adapter", () => {
     });
   });
 
-  describe("Contract Compliance", () => {
-    beforeEach(() => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
-    });
-
-    it("should conform to LoggerPort interface", () => {
-      // Verify inheritance and interface compliance
-      expect(adapter).to.be.instanceOf(LoggerPort);
-
-      // Verify all required methods exist and are functions
-      const requiredMethods = [
-        "error",
-        "warn",
-        "info",
-        "http",
-        "verbose",
-        "debug",
-      ];
-      requiredMethods.forEach((method) => {
-        expect(typeof adapter[method]).to.equal("function");
-      });
-    });
-
-    it("should implement method signatures correctly", () => {
-      // Test method signatures and behavior contracts
-      expect(() => adapter.info("message")).to.not.throw();
-      expect(() => adapter.info("message", {})).to.not.throw();
-      expect(() => adapter.error("error", { context: {} })).to.not.throw();
-    });
-
-    it("should handle standard logging patterns", () => {
-      // Verify contract behavior expectations
-      expect(() => {
-        adapter.info("test message");
-        adapter.error("test error", { userId: "123" });
-        adapter.debug("debug info", { trace: true });
-      }).to.not.throw();
-    });
-
-    it("should accept message and optional metadata parameters", () => {
-      // Test parameter contract
-      expect(adapter.info.length).to.equal(2); // message, meta (optional)
-      expect(adapter.error.length).to.equal(2);
-      expect(adapter.warn.length).to.equal(2);
-      expect(adapter.debug.length).to.equal(2);
-      expect(adapter.http.length).to.equal(2);
-      expect(adapter.verbose.length).to.equal(2);
-    });
-  });
-
   describe("Logging methods", () => {
-    beforeEach(() => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
-    });
-
     describe("error method", () => {
       it("should call winston logger error method", () => {
         adapter.error("Error message");
@@ -254,10 +277,6 @@ describe("Winston Logger Adapter", () => {
   });
 
   describe("Method parameter handling", () => {
-    beforeEach(() => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
-    });
-
     it("should handle null message", () => {
       expect(() => adapter.info(null)).to.not.throw();
       const call = mockLogger.info.mock.calls[0];
@@ -316,10 +335,6 @@ describe("Winston Logger Adapter", () => {
   });
 
   describe("Multiple method calls", () => {
-    beforeEach(() => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
-    });
-
     it("should handle multiple sequential calls", () => {
       adapter.error("Error 1");
       adapter.warn("Warning 1");
@@ -457,10 +472,6 @@ describe("Winston Logger Adapter", () => {
   });
 
   describe("JSDoc compliance", () => {
-    beforeEach(() => {
-      adapter = new WinstonLoggerAdapter(mockLogger);
-    });
-
     it("should accept string message and object meta as documented", () => {
       adapter.error("string message", { key: "value" });
       adapter.warn("string message", { key: "value" });

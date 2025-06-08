@@ -1,6 +1,4 @@
 import { validateEnvVars } from "../utils/envValidator.js";
-import logger from "../utils/logger.js";
-import { CorsError } from "../errors/CorsError.js";
 
 // Helper to sanitize and validate CORS origins from env (only valid http/https URLs)
 function parseAllowedOrigins(origins) {

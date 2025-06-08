@@ -3,7 +3,7 @@
   "name": "whitecodes",
 
   // Docker Compose configuration
-  "dockerComposeFile": "docker-compose.yml",
+  "dockerComposeFile": "docker-compose.yaml",
   "service": "dev-container",
   "workspaceFolder": "/workspace",
 
@@ -19,8 +19,14 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
+      "source.fixAll.eslint": "explicit"
     },
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ],
     "javascript.updateImportsOnFileMove.enabled": "always",
     "typescript.updateImportsOnFileMove.enabled": "always",
     "javascript.suggest.autoImports": true,
@@ -38,8 +44,8 @@
 
   // Extensions
   "extensions": [
-    "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
     "christian-kohler.npm-intellisense",
     "christian-kohler.path-intellisense",
     "streetsidesoftware.code-spell-checker",
@@ -47,11 +53,11 @@
     "ms-ossdata.vscode-pgsql",
     "redhat.vscode-yaml",
     "gruntfuggly.todo-tree",
+    "connor4312.nodejs-testing",
     "ms-azuretools.vscode-containers",
-    "connor4312.nodejs-testing"
+    "docker.docker"
   ],
 
   // Run multiple commands after container creation
-  // && chmod +x ${containerWorkspaceFolder}/.devcontainer/install-extensions.sh && ${containerWorkspaceFolder}/.devcontainer/install-extensions.sh
-  "postCreateCommand": "sudo chmod 666 /var/run/docker.sock"
+  "postCreateCommand": "sudo chmod 666 /var/run/docker.sock && npm install"
 }

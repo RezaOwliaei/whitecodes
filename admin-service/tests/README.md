@@ -4,7 +4,9 @@ This document outlines the testing standards, patterns, and practices for the ad
 
 ## Overview
 
-Our testing strategy focuses on **comprehensive coverage**, **architectural compliance**, and **developer experience**. We use modern Node.js testing tools and patterns that align with our hexagonal architecture and ESM-first approach.
+Our testing strategy focuses on **proportional coverage**, **architectural compliance where relevant**, and **developer experience**. We use modern Node.js testing tools and patterns that align with our hexagonal architecture and ESM-first approach.
+
+**Key principle: Test complexity should match code complexity.**
 
 ## Testing Stack
 
@@ -19,10 +21,10 @@ Our testing strategy focuses on **comprehensive coverage**, **architectural comp
 
 ### Why This Stack?
 
-✅ **Zero External Dependencies**: Uses Node.js built-in capabilities  
-✅ **Performance**: Native implementation is faster than external libraries  
-✅ **Maintenance**: No external library version conflicts  
-✅ **Modern**: Supports ESM, async/await, and latest JavaScript features  
+✅ **Zero External Dependencies**: Uses Node.js built-in capabilities
+✅ **Performance**: Native implementation is faster than external libraries
+✅ **Maintenance**: No external library version conflicts
+✅ **Modern**: Supports ESM, async/await, and latest JavaScript features
 ✅ **Standardization**: Consistent with Node.js ecosystem direction
 
 ## Project Structure
@@ -53,6 +55,445 @@ admin-service/tests/
 | **Test Helpers**      | `*.helper.js`           | `database.helper.js`      |
 | **Test Fixtures**     | `*.fixture.js`          | `user.fixture.js`         |
 | **Mock Objects**      | `*.mock.js`             | `logger.mock.js`          |
+
+## Test Scope and Proportionality
+
+### Right-Sizing Your Tests for DDD/CQRS/Event Sourcing Architecture
+
+**The most important principle: Match test complexity to architectural layer and responsibility.**
+
+This admin-service follows **Domain-Driven Design (DDD)**, **CQRS**, **Event Sourcing**, and **Hexagonal Architecture** patterns. Testing strategy must align with these architectural decisions (see `docs/architecture/` for full ADRs).
+
+| Architectural Layer      | Test Scope                              | Example Components                           |
+| ------------------------ | --------------------------------------- | -------------------------------------------- |
+| **Domain Layer**         | Pure business logic + invariant testing | Aggregates, Entities, Value Objects, Events  |
+| **Application Layer**    | Use case orchestration + mocking        | Command/Query handlers, Application services |
+| **API Layer**            | HTTP contract + validation testing      | Controllers, DTOs, Validators, Middleware    |
+| **Infrastructure Layer** | Adapter contracts + integration testing | Repository adapters, Event stores, Loggers   |
+| **Shared/Utils**         | Behavior + edge case testing            | Factories, Utilities, Constants, Configs     |
+
+### Architectural Testing Matrix
+
+| Component Type                | Test Focus                                   | Coverage Level   | Example                                |
+| ----------------------------- | -------------------------------------------- | ---------------- | -------------------------------------- |
+| **Domain Aggregates**         | Business rules + invariants + event emission | Comprehensive    | AdminAggregate, UserAggregate          |
+| **Domain Entities**           | Identity + lifecycle + business behavior     | Comprehensive    | Admin entity, User entity              |
+| **Value Objects**             | Immutability + validation + equality         | Full scenarios   | Email, Password, AdminId, Status       |
+| **Domain Events**             | Structure + immutability + serialization     | Contract focused | AdminCreated, AdminUpdated events      |
+| **Domain Services**           | Cross-aggregate business logic               | Comprehensive    | AdminDomainService                     |
+| **Invariants**                | Business rule enforcement                    | Edge cases       | Password policies, Email validation    |
+| **Command Handlers**          | Use case orchestration + side effects        | Behavior + mocks | CreateAdminHandler, UpdateAdminHandler |
+| **Query Handlers**            | Data retrieval + projection logic            | Behavior + mocks | GetAdminHandler, ListAdminsHandler     |
+| **API Controllers**           | HTTP mapping + error handling                | Contract focused | AdminController endpoints              |
+| **Repository Contracts**      | Interface compliance + error handling        | Contract + edge  | AdminRepository port/adapter           |
+| **Event Store Adapters**      | Event persistence + replay + versioning      | Integration      | KurrentDB adapter, MongoDB adapter     |
+| **Infrastructure Components** | Adapter behavior + error handling            | Comprehensive    | Logger factory, Message handlers       |
+| **DTOs/Commands/Queries**     | Structure + validation + serialization       | Data contracts   | CreateAdminCommand, AdminQuery         |
+| **API Validators**            | Input shape + format + security validation   | Security focused | Joi/Zod validators                     |
+| **Simple Config/Constants**   | Basic structure + key behavior               | Minimal          | Static objects, enums, mappings        |
+
+### ⚠️ **Avoid Over-Engineering**
+
+```javascript
+// ❌ OVER-ENGINEERED: 289 lines of tests for 11 lines of static config
+describe("Static Color Config", () => {
+  // 50+ tests for simple object...
+});
+
+// ✅ RIGHT-SIZED: 42 lines of tests for 11 lines of static config
+describe("Static Color Config", () => {
+  // Structure, basic validation, key behavior only
+});
+```
+
+**Ask yourself:**
+
+- 📊 **What's the code's responsibility level?** (Infrastructure vs. simple config)
+- 🎯 **Am I testing implementation details or behavior?** (Focus on behavior)
+- 🔧 **What's the blast radius if this breaks?** (Critical infrastructure needs more tests)
+- ⚖️ **Is the testing effort proportional to the risk?** (Consider impact and complexity)
+- 🏗️ **Does this code have multiple responsibilities?** (Factories, wrappers, adapters often do)
+
+### DDD/CQRS/Event Sourcing Testing Decision Tree
+
+```
+Which architectural layer does this belong to?
+
+DOMAIN LAYER (admin-context/domain/*)
+├─ Is it an Aggregate?
+│   ├─ YES → Comprehensive business logic + invariant + event emission testing
+│   └─ Example: AdminAggregate command methods, invariant enforcement, event production
+├─ Is it an Entity?
+│   ├─ YES → Identity + lifecycle + business behavior testing
+│   └─ Example: Admin entity methods, state transitions, validation
+├─ Is it a Value Object?
+│   ├─ YES → Immutability + validation + equality + creation testing
+│   └─ Example: Email, Password, AdminId - test all validation rules and edge cases
+├─ Is it a Domain Event?
+│   ├─ YES → Structure + immutability + serialization contract testing
+│   └─ Example: AdminCreated, AdminUpdated - test event schema and metadata
+├─ Is it a Domain Service?
+│   ├─ YES → Cross-aggregate business logic + complex domain rules testing
+│   └─ Example: AdminDomainService - test complex business orchestration
+├─ Is it an Invariant?
+│   ├─ YES → Business rule enforcement + edge case + security validation
+│   └─ Example: Password policies, Email validation - test all rule variations
+└─ Is it a Factory/Repository Interface?
+    ├─ YES → Creation logic + interface contract testing
+    └─ Example: AdminFactory, AdminRepository port - test object creation and contracts
+
+APPLICATION LAYER (admin-context/application/*)
+├─ Is it a Command Handler?
+│   ├─ YES → Use case orchestration + side effect + error handling testing
+│   └─ Example: CreateAdminHandler - test aggregate loading, command execution, persistence
+├─ Is it a Query Handler?
+│   ├─ YES → Data retrieval + projection + performance testing
+│   └─ Example: GetAdminHandler - test query execution, data mapping, error handling
+└─ Is it an Application Service?
+    ├─ YES → Multi-aggregate coordination + transaction testing
+    └─ Example: AdminApplicationService - test complex use case orchestration
+
+API LAYER (admin-context/api/*)
+├─ Is it a Controller?
+│   ├─ YES → HTTP contract + error mapping + security testing
+│   └─ Example: AdminController - test request/response mapping, status codes, auth
+├─ Is it a DTO/Command/Query?
+│   ├─ YES → Structure + validation + serialization contract testing
+│   └─ Example: CreateAdminCommand - test data shape, validation rules, conversion
+├─ Is it a Validator?
+│   ├─ YES → Input validation + security + edge case testing
+│   └─ Example: Joi/Zod validators - test all validation rules, malicious input, edge cases
+└─ Is it Middleware?
+    ├─ YES → Request processing + security + error handling testing
+    └─ Example: Auth middleware - test authentication, authorization, error scenarios
+
+INFRASTRUCTURE LAYER (infrastructure/*)
+├─ Is it a Repository Adapter?
+│   ├─ YES → Port contract + data mapping + error handling + integration testing
+│   └─ Example: MongoAdminRepository - test CRUD operations, error handling, data consistency
+├─ Is it an Event Store Adapter?
+│   ├─ YES → Event persistence + replay + versioning + concurrency testing
+│   └─ Example: KurrentDB adapter - test event storage, retrieval, stream handling
+├─ Is it a Message Handler?
+│   ├─ YES → Message processing + idempotency + error handling testing
+│   └─ Example: Event handlers - test message consumption, processing, failure scenarios
+└─ Is it an Infrastructure Component?
+    ├─ YES → Adapter behavior + configuration + error handling testing
+    └─ Example: Logger factory, HTTP client - test component behavior, config, failures
+
+SHARED/UTILITIES
+├─ Is it a simple config/constant?
+│   ├─ YES → Basic structure + key validation + security boundaries
+│   └─ Example: Status codes, color mappings - minimal testing focused on structure
+└─ Is it a utility function?
+    ├─ YES → Input/output + edge case + security validation testing
+    └─ Example: Date formatters, ID generators - test behavior and edge cases
+```
+
+**💡 Critical Insight**: **Architectural layer determines testing complexity** - Domain logic needs comprehensive business rule testing, while infrastructure needs contract compliance and error handling.
+
+### Domain Layer Testing Examples
+
+#### Testing Domain Aggregates (Comprehensive Business Logic)
+
+```javascript
+// ✅ COMPREHENSIVE: Domain aggregate with business rules, invariants, and events
+describe("AdminAggregate", () => {
+  describe("createAdmin command", () => {
+    it("should create admin with valid data and emit AdminCreated event", () => {
+      // Test: Business logic + invariant enforcement + event emission
+      const adminId = new AdminId("admin-123");
+      const email = new Email("admin@example.com");
+      const password = new Password("SecurePass123!");
+
+      const events = AdminAggregate.createAdmin(adminId, email, password);
+
+      expect(events).to.have.length(1);
+      expect(events[0]).to.be.instanceOf(AdminCreated);
+      expect(events[0].aggregateId).to.equal(adminId.value);
+    });
+
+    it("should enforce password policy invariant", () => {
+      // Test: Business rule enforcement
+      const adminId = new AdminId("admin-123");
+      const email = new Email("admin@example.com");
+      const weakPassword = new Password("weak"); // Should fail validation
+
+      expect(() => {
+        AdminAggregate.createAdmin(adminId, email, weakPassword);
+      }).to.throw(PasswordPolicyViolation);
+    });
+
+    it("should prevent duplicate admin creation", () => {
+      // Test: Business invariant
+      const existingAdmin = AdminAggregate.fromEvents([
+        new AdminCreated({
+          aggregateId: "admin-123",
+          email: "admin@example.com",
+        }),
+      ]);
+
+      expect(() => {
+        existingAdmin.createAdmin(/* same data */);
+      }).to.throw(AdminAlreadyExistsError);
+    });
+  });
+});
+```
+
+#### Testing Value Objects (Immutability + Validation)
+
+```javascript
+// ✅ COMPREHENSIVE: Value object with validation and business rules
+describe("Email Value Object", () => {
+  it("should create valid email", () => {
+    const email = new Email("user@example.com");
+    expect(email.value).to.equal("user@example.com");
+  });
+
+  it("should be immutable", () => {
+    const email = new Email("user@example.com");
+    expect(() => {
+      email.value = "hacker@evil.com";
+    }).to.throw();
+  });
+
+  it("should validate email format", () => {
+    expect(() => new Email("invalid-email")).to.throw(InvalidEmailError);
+    expect(() => new Email("@example.com")).to.throw(InvalidEmailError);
+    expect(() => new Email("user@")).to.throw(InvalidEmailError);
+  });
+
+  it("should implement equality correctly", () => {
+    const email1 = new Email("user@example.com");
+    const email2 = new Email("user@example.com");
+    const email3 = new Email("other@example.com");
+
+    expect(email1.equals(email2)).to.be.true;
+    expect(email1.equals(email3)).to.be.false;
+  });
+});
+```
+
+### Application Layer Testing Examples
+
+#### Testing Command Handlers (Use Case Orchestration)
+
+```javascript
+// ✅ COMPREHENSIVE: Command handler with mocking and side effects
+describe("CreateAdminHandler", () => {
+  let mockAdminRepository;
+  let mockEventStore;
+  let handler;
+
+  beforeEach(() => {
+    mockAdminRepository = {
+      findById: mock.fn(),
+      save: mock.fn()
+    };
+    mockEventStore = {
+      saveEvents: mock.fn()
+    };
+    handler = new CreateAdminHandler(mockAdminRepository, mockEventStore);
+  });
+
+  it("should create admin and persist events", async () => {
+    // Arrange: Mock dependencies
+    mockAdminRepository.findById.mock.mockResolvedValue(null); // Admin doesn't exist
+    mockEventStore.saveEvents.mock.mockResolvedValue();
+
+    const command = new CreateAdminCommand({
+      adminId: "admin-123",
+      email: "admin@example.com",
+      password: "SecurePass123!"
+    });
+
+    // Act: Execute use case
+    await handler.handle(command);
+
+    // Assert: Verify orchestration
+    expect(mockAdminRepository.findById.mock.callCount()).to.equal(1);
+    expect(mockEventStore.saveEvents.mock.callCount()).to.equal(1);
+    const savedEvents = mockEventStore.saveEvents.mock.calls[0].arguments[0];
+    expect(savedEvents[0]).to.be.instanceOf(AdminCreated);
+  });
+
+  it("should handle duplicate admin error", async () => {
+    // Test: Business rule enforcement at application layer
+    mockAdminRepository.findById.mock.mockResolvedValue(
+      AdminAggregate.fromEvents([new AdminCreated({...})])
+    );
+
+    const command = new CreateAdminCommand({...});
+
+    await expect(handler.handle(command))
+      .to.be.rejectedWith(AdminAlreadyExistsError);
+  });
+});
+```
+
+### Infrastructure Layer Testing Examples
+
+#### Testing Repository Adapters (Contract Compliance)
+
+```javascript
+// ✅ COMPREHENSIVE: Repository adapter with contract compliance
+describe("MongoAdminRepository", () => {
+  let repository;
+  let mockMongoCollection;
+
+  beforeEach(() => {
+    mockMongoCollection = {
+      findOne: mock.fn(),
+      insertOne: mock.fn(),
+      updateOne: mock.fn(),
+    };
+    repository = new MongoAdminRepository(mockMongoCollection);
+  });
+
+  it("should implement AdminRepository port contract", () => {
+    // Test: Interface compliance
+    expect(repository).to.be.instanceOf(AdminRepository);
+    expect(typeof repository.findById).to.equal("function");
+    expect(typeof repository.save).to.equal("function");
+  });
+
+  it("should map domain aggregate to MongoDB document", async () => {
+    // Test: Data mapping
+    const admin = AdminAggregate.fromEvents([
+      new AdminCreated({
+        aggregateId: "admin-123",
+        email: "admin@example.com",
+      }),
+    ]);
+
+    await repository.save(admin);
+
+    expect(mockMongoCollection.insertOne.mock.callCount()).to.equal(1);
+    const document = mockMongoCollection.insertOne.mock.calls[0].arguments[0];
+    expect(document._id).to.equal("admin-123");
+    expect(document.email).to.equal("admin@example.com");
+  });
+
+  it("should handle database connection errors", async () => {
+    // Test: Error handling
+    mockMongoCollection.findOne.mock.mockRejectedValue(
+      new Error("Connection timeout")
+    );
+
+    await expect(repository.findById("admin-123")).to.be.rejectedWith(
+      "Connection timeout"
+    );
+  });
+});
+```
+
+**Key insight**: **Architectural responsibility determines testing scope** - not just line count.
+
+### Classification Warning Signs
+
+**🚨 Don't confuse these infrastructure patterns with simple config:**
+
+| Pattern                    | Looks Like        | Actually Is             | Test Approach           |
+| -------------------------- | ----------------- | ----------------------- | ----------------------- |
+| **Factory Functions**      | Simple function   | Complex infrastructure  | Comprehensive scenarios |
+| **Method Wrappers**        | Simple delegation | Context/behavior logic  | Full behavior testing   |
+| **Configuration Builders** | Simple object     | Complex composition     | Scenario testing        |
+| **Middleware**             | Simple function   | Request/response logic  | Full pipeline testing   |
+| **Adapters**               | Simple wrapper    | Contract implementation | Contract compliance     |
+
+**Ask: "What happens if this breaks?"**
+
+- Simple config: Minor visual changes
+- Infrastructure: System-wide failures
+
+### Static Config Testing - Real Example
+
+Here's a perfect example of proportional testing for **actual** static configurations:
+
+```javascript
+// ❌ OVER-ENGINEERED (289 lines for 11 lines of config)
+describe("Logger Levels", () => {
+  it("should have error as priority 0", () => {
+    expect(logLevels.error).to.equal(0); // Brittle!
+  });
+  it("should have exactly 7 levels", () => {
+    expect(Object.keys(logLevels)).to.have.length(7); // Brittle!
+  });
+  it("should have consecutive integers", () => {
+    // Testing JavaScript language features...
+  });
+  // ... 20+ more tests
+});
+
+// ✅ RIGHT-SIZED (39 lines for 11 lines of config)
+describe("Logger Levels", () => {
+  it("should export logLevels as an object", () => {
+    expect(logLevels).to.be.an("object"); // Essential structure
+  });
+  it("should have numeric priority values", () => {
+    Object.values(logLevels).forEach((p) => expect(p).to.be.a("number")); // Essential type
+  });
+  it("should have unique priority values", () => {
+    const priorities = Object.values(logLevels);
+    expect(new Set(priorities).size).to.equal(priorities.length); // Essential constraint
+  });
+  it("should be immutable", () => {
+    expect(() => {
+      logLevels.new = 1;
+    }).to.throw(); // Essential safety
+  });
+});
+```
+
+**Key insight**: Test exactly what can break functionality or security, nothing more.
+
+### Security Considerations in Testing
+
+Even simple configurations can have security implications that should be tested:
+
+```javascript
+// ✅ SECURITY-AWARE: Test configuration that affects security
+describe("API Rate Limits Config", () => {
+  it("should enforce reasonable rate limits", () => {
+    expect(rateLimits.requestsPerMinute).to.be.at.most(1000); // Prevent DoS
+    expect(rateLimits.requestsPerMinute).to.be.at.least(1); // Prevent lockout
+  });
+
+  it("should have secure default timeouts", () => {
+    expect(timeouts.sessionTimeout).to.be.at.most(3600000); // Max 1 hour
+    expect(timeouts.requestTimeout).to.be.at.most(30000); // Max 30 seconds
+  });
+});
+
+describe("Logger Configuration", () => {
+  it("should not expose sensitive data in logs", () => {
+    const sensitiveFields = ["password", "token", "secret", "key"];
+    expect(logConfig.excludeFields).to.include.members(sensitiveFields);
+  });
+});
+
+// ✅ SECURITY-AWARE: Test input validation
+describe("User Input Validator", () => {
+  it("should reject potential XSS attempts", () => {
+    const maliciousInput = '<script>alert("xss")</script>';
+    expect(() => validateUserInput(maliciousInput)).to.throw(/Invalid input/);
+  });
+
+  it("should enforce maximum input length", () => {
+    const oversizedInput = "a".repeat(10000);
+    expect(() => validateUserInput(oversizedInput)).to.throw(/Too long/);
+  });
+});
+```
+
+**Security testing principles:**
+
+- **Validate security boundaries** (rate limits, timeouts, input sizes)
+- **Test sensitive data handling** (logging exclusions, sanitization)
+- **Verify input validation** (XSS, injection prevention)
+- **Check access controls** (authentication, authorization)
+- **Test error disclosure** (no sensitive info in error messages)
 
 ## Test Categories
 
@@ -524,6 +965,8 @@ c8 check-coverage --lines 80 --functions 85 --branches 75
 
 **Note**: All tests should be **deterministic**, **fast**, and **side-effect-free** unless explicitly marked as integration or performance. Favor unit tests for domain logic and integration tests only for verifying contracts and adapters. Tests should be **isolated** - each test should run independently without relying on state from other tests.
 
+**⚠️ Important**: **Don't over-test simple code**. Static configurations, simple constants, and basic utilities need minimal testing. Focus comprehensive testing on business logic, integrations, and complex workflows.
+
 ## Best Practices
 
 ### 1. Test Organization
@@ -727,15 +1170,50 @@ DEBUG=* node --test path/to/test.js
 
 ## Team Guidelines
 
-### 1. Code Review Checklist
+### 1. DDD/CQRS Architecture Code Review Checklist
 
-- [ ] Tests follow naming conventions
-- [ ] Tests use proper mocking patterns
-- [ ] Mocks are reset in `afterEach`
-- [ ] Tests cover happy path and error scenarios
-- [ ] Assertions are specific and meaningful
-- [ ] Tests are properly isolated
-- [ ] Coverage meets minimum requirements
+#### Domain Layer Testing
+
+- [ ] **Aggregates**: Business logic, invariants, and event emission thoroughly tested
+- [ ] **Entities**: Identity, lifecycle, and behavior tested without infrastructure concerns
+- [ ] **Value Objects**: Immutability, validation, and equality implemented and tested
+- [ ] **Domain Events**: Structure, immutability, and schema contracts tested
+- [ ] **Invariants**: Business rules tested with edge cases and security boundaries
+- [ ] **Domain Services**: Cross-aggregate logic tested in isolation
+- [ ] **No Infrastructure Dependencies**: Domain tests use no mocks for external systems
+
+#### Application Layer Testing
+
+- [ ] **Command Handlers**: Use case orchestration tested with proper mocking
+- [ ] **Query Handlers**: Data retrieval and projection logic tested
+- [ ] **Application Services**: Multi-aggregate coordination tested
+- [ ] **Side Effects**: Event persistence and external service calls mocked and verified
+- [ ] **Error Handling**: Domain exceptions properly caught and handled
+- [ ] **Transaction Boundaries**: Aggregate consistency and event atomicity tested
+
+#### API Layer Testing
+
+- [ ] **Controllers**: HTTP contract testing (request/response mapping, status codes)
+- [ ] **DTOs**: Data structure validation and serialization tested
+- [ ] **Validators**: Input validation with security focus (XSS, injection, size limits)
+- [ ] **Middleware**: Authentication, authorization, and request processing tested
+- [ ] **Error Mapping**: Domain exceptions properly mapped to HTTP responses
+
+#### Infrastructure Layer Testing
+
+- [ ] **Repository Adapters**: Port contract compliance and data mapping tested
+- [ ] **Event Store Adapters**: Event persistence, replay, and versioning tested
+- [ ] **Message Handlers**: Event processing, idempotency, and error handling tested
+- [ ] **Integration Tests**: Real database/message broker integration where needed
+- [ ] **Configuration**: Adapter configuration and connection handling tested
+
+#### General Architecture Compliance
+
+- [ ] **Hexagonal Architecture**: Dependencies point inward, ports/adapters properly tested
+- [ ] **CQRS Separation**: Commands and queries properly separated and tested
+- [ ] **Event Sourcing**: State changes via events only, event replay tested
+- [ ] **Layer Boundaries**: No domain logic in application/infrastructure layers
+- [ ] **Test Isolation**: Proper mock reset and test independence maintained
 
 ### 2. Adding New Tests
 
@@ -817,7 +1295,12 @@ DEBUG=* node --test path/to/test.js
 ### Internal Resources
 
 - [Logging Tests Example](./unit/infrastructure/logging/README.md)
-- [Architecture ADR](../docs/architecture/)
+- [Architecture Decision Records](../docs/architecture/)
+  - [Domain Layer ADR](../docs/architecture/adr-domain.md)
+  - [Application Layer ADR](../docs/architecture/adr-application.md)
+  - [API Layer ADR](../docs/architecture/adr-api.md)
+  - [Logging Subsystem ADR](../docs/architecture/adr-logging.md)
+- [Code Review Architecture Checklist](../docs/architecture/code-review-architecture.md)
 - [Project Documentation](../README.md)
 
 ### External Resources

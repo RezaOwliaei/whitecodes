@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
+
 import { expect } from "chai";
+
 import {
   levelFormatter,
   logFormatter,
@@ -277,6 +279,14 @@ describe("Pino Logger Formatters", () => {
 
     it("should be called without parameters", () => {
       expect(() => timestamp()).to.not.throw();
+    });
+
+    it("should format timestamps correctly", () => {
+      expect(() => {
+        const result = timestamp();
+        expect(result).to.include('"time":');
+        expect(result).to.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
+      }).to.not.throw();
     });
   });
 

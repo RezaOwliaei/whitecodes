@@ -1,6 +1,8 @@
 import { describe, it } from "node:test";
+
 import { expect } from "chai";
 import winston from "winston";
+
 import {
   consoleFormat,
   jsonFormat,
@@ -61,6 +63,19 @@ describe("Winston Logger Formats", () => {
 
       const result = consoleFormat.transform(info);
       expect(result).to.be.an("object");
+    });
+
+    it("should transform log entries for console output", () => {
+      const info = {
+        level: "info",
+        message: "test message",
+        timestamp: "2023-01-01T00:00:00.000Z",
+      };
+
+      expect(() => {
+        const result = consoleFormat.transform(info);
+        expect(result).to.have.property(Symbol.for("message"));
+      }).to.not.throw();
     });
   });
 

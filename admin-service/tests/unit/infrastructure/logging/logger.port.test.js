@@ -1,67 +1,76 @@
-import { describe, it } from "node:test";
-import { expect } from "chai";
-import { LoggerPort } from "../../../../src/infrastructure/logging/logger.port.js";
+import { describe, it, beforeEach } from "node:test";
 
+import { expect } from "chai";
+
+import { LoggerPort } from "../../../../src/infrastructure/logging/logger.port.js";
+import { NotImplementedError } from "../../../../src/shared/errors/index.js";
+
+/**
+ * LoggerPort Tests
+ *
+ * Architecture: Abstract Port Interface (Contract Testing)
+ * Scope: Essential contract compliance and error behavior validation
+ *
+ * Focus: Tests only what can break functionality, not language features
+ */
 describe("LoggerPort", () => {
   let loggerPort;
 
-  describe("Abstract class behavior", () => {
-    it("should throw error when error method is called without implementation", () => {
-      loggerPort = new LoggerPort();
-      expect(() => loggerPort.error("test message")).to.throw(
-        'Method "error" must be implemented by subclass'
-      );
+  beforeEach(() => {
+    loggerPort = new LoggerPort();
+  });
+
+  describe("Abstract Method Contract", () => {
+    it("should throw NotImplementedError for all logging methods", () => {
+      const methods = [
+        "fatal",
+        "error",
+        "warn",
+        "info",
+        "http",
+        "verbose",
+        "debug",
+        "trace",
+      ];
+
+      methods.forEach((method) => {
+        expect(() => {
+          loggerPort[method]("test message");
+        }).to.throw(
+          NotImplementedError,
+          `Method "${method}" must be implemented by subclass`
+        );
+      });
     });
 
-    it("should throw error when warn method is called without implementation", () => {
-      loggerPort = new LoggerPort();
-      expect(() => loggerPort.warn("test message")).to.throw(
-        'Method "warn" must be implemented by subclass'
-      );
+    it("should provide helpful error metadata for developers", () => {
+      try {
+        loggerPort.info("test message");
+      } catch (error) {
+        expect(error).to.be.instanceOf(NotImplementedError);
+        expect(error.methodName).to.equal("info");
+        expect(error.interfaceName).to.equal("LoggerPort");
+        expect(error.details.logLevel).to.equal("info");
+        expect(error.details.expectedImplementation).to.include(
+          "Logger adapter must implement info() method"
+        );
+      }
     });
+  });
 
-    it("should throw error when info method is called without implementation", () => {
-      loggerPort = new LoggerPort();
-      expect(() => loggerPort.info("test message")).to.throw(
-        'Method "info" must be implemented by subclass'
-      );
-    });
-
-    it("should throw error when http method is called without implementation", () => {
-      loggerPort = new LoggerPort();
-      expect(() => loggerPort.http("test message")).to.throw(
-        'Method "http" must be implemented by subclass'
-      );
-    });
-
-    it("should throw error when verbose method is called without implementation", () => {
-      loggerPort = new LoggerPort();
-      expect(() => loggerPort.verbose("test message")).to.throw(
-        'Method "verbose" must be implemented by subclass'
-      );
-    });
-
-    it("should throw error when debug method is called without implementation", () => {
-      loggerPort = new LoggerPort();
-      expect(() => loggerPort.debug("test message")).to.throw(
-        'Method "debug" must be implemented by subclass'
-      );
-    });
-
-    it("should be instantiable", () => {
-      loggerPort = new LoggerPort();
-      expect(loggerPort).to.be.instanceOf(LoggerPort);
-    });
-
-    it("should allow inheritance", () => {
-      class TestLogger extends LoggerPort {
-        error() {
-          return "error implemented";
+  describe("Inheritance Contract", () => {
+    it("should allow concrete implementations to override methods", () => {
+      class ConcreteLogger extends LoggerPort {
+        info(message, meta = {}) {
+          return `INFO: ${message}`;
         }
       }
-      const testLogger = new TestLogger();
-      expect(testLogger).to.be.instanceOf(LoggerPort);
-      expect(testLogger.error()).to.equal("error implemented");
+
+      const concreteLogger = new ConcreteLogger();
+      expect(concreteLogger.info("test")).to.equal("INFO: test");
+
+      // Unimplemented methods should still throw
+      expect(() => concreteLogger.error("test")).to.throw(NotImplementedError);
     });
   });
 });

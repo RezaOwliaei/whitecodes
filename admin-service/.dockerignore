@@ -1,0 +1,22 @@
+# Git and Node specific
+.git
+.gitignore
+node_modules
+npm-debug.log*
+
+# Docker specific
+Dockerfile
+.dockerignore
+
+# Project specific
+README.md
+*.md
+
+# Environment files
+.env
+.env.*
+!/.env.example
+
+# OS specific
+.DS_Store
+Thumbs.db
