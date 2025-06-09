@@ -13,24 +13,17 @@
     "test:ci": "npm run test:coverage && c8 check-coverage --lines 80 --functions 85 --branches 75",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "healthcheck": "node -e \"import('node:http').then(({default:http})=>http.get('http://localhost:' + (process.env.SERVER_CONFIGS_PORT || 3000) + '/api/v1/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1)))\"",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint src/ tests/ --fix"
   },
-  "keywords": [
-    "admin",
-    "service",
-    "logging",
-    "nodejs",
-    "winston",
-    "pino",
-    "hexagonal-architecture"
-  ],
-  "author": "Admin Service Team",
-  "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
     "winston": "^3.17.0",
